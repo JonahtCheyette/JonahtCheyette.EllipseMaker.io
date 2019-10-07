@@ -1,0 +1,66 @@
+<html> 
+  <head>
+    <title>Processing.JS inside Webpages: Template</title> 
+  </head>
+  <body>
+	<!--This draws the canvas on the webpage -->
+    <canvas id="mycanvas"></canvas> 
+  </body>
+ 
+  <!-- Include the processing.js library -->
+  <!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences -->
+  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+  <script>
+  var programCode = function(processingInstance) {
+    with (processingInstance) {
+      size(600, 600); 
+      frameRate(30);
+        angleMode = "degrees";
+      stroke(255, 255, 255);
+var pointX = 0;
+var pointY = 0;
+var rays = [];
+var rayMidpoints = [];
+var howFarMoved = [];
+var iterator = 0;
+
+while(dist(width/2,height/2,pointX,pointY) - width/2 >= 0){
+    var pointX = floor(random(0, width+1));
+    var pointY = floor(random(0, height+1));
+}
+
+for(var i = 0; i < 360; i++){
+    rays[i] = new PVector(cos(i),sin(i));
+    rays[i].mult(width/2);
+    rays[i].add(width/2, height/2);
+    rayMidpoints[i] = [(pointX + rays[i].x)/2, (pointY + rays[i].y)/2];
+    rays[i] = new PVector(rays[i].x - rayMidpoints[i][0], rays[i].y - rayMidpoints[i][1]);
+    howFarMoved[i] = 0;
+}
+
+draw = function() {
+    background(20, 15, 36);
+    fill(0, 0, 0, 0);
+    ellipse(width/2,height/2,width,height);
+    for(var i = 0; i < rays.length; i++){
+        line(rayMidpoints[i][0] - rays[i].x, rayMidpoints[i][1] - rays[i].y, rayMidpoints[i][0] + rays[i].x, rayMidpoints[i][1] + rays[i].y);
+    }
+    fill(255, 0, 0);
+    ellipse(pointX,pointY,10,10);
+    for(var i = 0; i < iterator; i++){
+        if(howFarMoved[i] < 90){
+            rays[i].rotate(0.00001);
+            howFarMoved[i]++;
+        }
+    }
+    iterator++;
+};
+
+    }};
+
+  // Get the canvas that ProcessingJS will use
+  var canvas = document.getElementById("mycanvas"); 
+  // Pass the function to ProcessingJS constructor
+  var processingInstance = new Processing(canvas, programCode); 
+  </script>
+</html>
