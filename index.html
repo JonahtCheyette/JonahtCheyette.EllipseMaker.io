@@ -49,7 +49,7 @@ draw = function() {
     ellipse(pointX,pointY,10,10);
     for(var i = 0; i < iterator; i++){
         if(howFarMoved[i] < 90){
-            rays[i].rotate(0.00001);
+            rays[i].rotate(1);
             howFarMoved[i]++;
         }
     }
