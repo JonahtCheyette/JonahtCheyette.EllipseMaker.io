@@ -15,7 +15,6 @@
     with (processingInstance) {
       size(600, 600); 
       frameRate(30);
-        angleMode = "degrees";
       stroke(255, 255, 255);
 var pointX = 0;
 var pointY = 0;
@@ -29,8 +28,8 @@ while(dist(width/2,height/2,pointX,pointY) - width/2 >= 0){
     var pointY = floor(random(0, height+1));
 }
 
-for(var i = 0; i < 360; i++){
-    rays[i] = new PVector(cos(i),sin(i));
+for(var i = 0; i < 360; i ++){
+    rays[i] = new PVector(cos(radians(i)),sin(radians(i)));
     rays[i].mult(width/2);
     rays[i].add(width/2, height/2);
     rayMidpoints[i] = [(pointX + rays[i].x)/2, (pointY + rays[i].y)/2];
@@ -49,13 +48,12 @@ draw = function() {
     ellipse(pointX,pointY,10,10);
     for(var i = 0; i < iterator; i++){
         if(howFarMoved[i] < 90){
-            rays[i].rotate(1);
-            howFarMoved[i]++;
+            rays[i].rotate(PI/180);
+            howFarMoved[i]+= 1;
         }
     }
     iterator++;
 };
-
     }};
 
   // Get the canvas that ProcessingJS will use
