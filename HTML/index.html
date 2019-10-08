@@ -1,7 +1,11 @@
 <html> 
   <head>
-    <title>Processing.JS inside Webpages: Template</title> 
+    <title>Ellipse Maker</title> 
+    <link rel="stylesheet" href="../CSS/stylesheet.css">
   </head>
+    <h1>
+        Ellipse Maker
+    </h1>
   <body>
 	<!--This draws the canvas on the webpage -->
     <canvas id="mycanvas"></canvas> 
@@ -13,7 +17,7 @@
   <script>
   var programCode = function(processingInstance) {
     with (processingInstance) {
-      size(600, 600); 
+      size(1100, 1100); 
       frameRate(30);
       stroke(255, 255, 255);
 var pointX = 0;
@@ -61,6 +65,9 @@ draw = function() {
   // Pass the function to ProcessingJS constructor
   var processingInstance = new Processing(canvas, programCode); 
   </script>
-    <br>
-    <a href = "Hnefatl.html">Hnefatl (Aincient viking board game for Leif Erikson day)</a>
+    <div class = "sidebar">
+    	<a href = "Hnefatl.html">Hnefatl (Aincient viking board game for Leif Erikson day)</a>
+        <br>
+        <a href = "snake.html">Snake</a>
+    </div>
 </html>

@@ -1,0 +1,195 @@
+<html> 
+  <head>
+    <title>Snake</title> 
+    <link rel="stylesheet" href="../CSS/stylesheet.css">
+  </head>
+    <h1>
+        Snake
+    </h1>
+  <body>
+	<!--This draws the canvas on the webpage -->
+    <canvas id="mycanvas"></canvas> 
+  </body>
+ 
+  <!-- Include the processing.js library -->
+  <!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences -->
+  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+  <script>
+  var programCode = function(processingInstance) {
+    with (processingInstance) {
+      size(600, 600); 
+      frameRate(30);var snake = [];
+var direction = "down";
+var change = false;
+var grow = true;
+var gameState = 0;
+var newX, newY;
+var speed = 8;
+var speedCounter = 0;
+var food = [];
+var posX = [];
+var posY = [];
+var openCount;
+var newFx, newFy;
+
+noStroke();
+textAlign(CENTER,CENTER);
+
+snake[0] = [];
+snake[0][0] = 6;
+snake[0][1] = 6;
+
+food[0] = floor(random(0,width/20));
+food[1] = floor(random(0,height/20));
+
+draw = function() {
+    if(gameState === 0){
+        background(0, 0, 255);
+        if(keyPressed){
+            if(keyCode === UP && direction !== "down" && !change){
+                direction = "up";
+                change = true;
+            } else if (keyCode === DOWN && direction !== "up" && !change){
+                direction = "down";
+                change = true;
+            } else if (keyCode === LEFT && direction !== "right" && !change){
+                direction = "left";
+                change = true;
+            } else if (keyCode === RIGHT && direction !== "left" && !change){
+                direction = "right";
+                change = true;
+            }
+        }
+        if(speedCounter >= speed){
+            change = false;
+            if(grow){
+                newX = snake[snake.length-1][0];
+                newY = snake[snake.length-1][1];
+            }
+            for(var i = snake.length - 1; i > 0; i--){
+                snake[i][0] = snake[i-1][0];
+                snake[i][1] = snake[i-1][1];
+            }
+            if(direction === "up"){
+                snake[0][1] --;
+            } else if(direction === "down"){
+                snake[0][1] ++;
+            } else if(direction === "left"){
+                snake[0][0] --;
+            } else if(direction === "right"){
+                snake[0][0] ++;
+            }
+            if(grow){
+                snake.push([newX,newY]);
+            }
+            grow = false;
+            if(snake[0][0] < 0 || snake[0][0] >= width / 20 || snake[0][1] < 0 || snake[0][1] >= height/20){
+                gameState = 1;
+            }
+            for(var i = 1; i < snake.length; i++){
+                if(snake[0][0] === snake[i][0] && snake[0][1] === snake[i][1]){
+                    gameState = 1;
+                }
+            }
+            if(snake[0][0] === food[0] && snake[0][1] === food [1]){
+                grow = true;
+                for(var i = 0; i < width/20; i++){
+                    posX[i] = i;
+                }
+                for(var j = 0; j < height/20; j++){
+                    posY[j] = j;
+                }
+                for(var i = 0; i < width/20; i++){
+                    openCount = width/20;
+                    for(var j = 0; j < snake.length; j++){
+                        if(snake[j][0] === i){
+                            openCount--;
+                        }
+                    }
+                    if(openCount <= 0){
+                        for(var j = posX.length - 1; j >= 0; j++){
+                            if(posX[j] === i){
+                                posX.splice(j);
+                            }
+                        }
+                    }
+                }
+                newFx = posX[floor(random(0,posX.length))];
+                for(var i = 0; i < height/20; i++){
+                    for(var j = 0; j < snake.length; j++){
+                        if(snake[j][0] === newFx){
+                            if(snake[j][1] === i){
+                                for(var k = posY.length-1; k >= 0; k--){
+                                    if(posY[k] === i){
+                                        posY.splice(k);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                newFy = posY[floor(random(0,posY.length))];
+                food[0] = newFx;
+                food[1] = newFy;
+            }
+            speedCounter = 0;
+        } else {
+            speedCounter++;
+        }
+        
+        fill(255, 0, 0);
+        rect(food[0]*width/30 + width/600, food[1]*height/30 + height/600, 0.03*width, 0.03*width);
+        fill(255, 149, 0);
+        for(var i = 0; i < snake.length; i++){
+            rect(snake[i][0]*width/30 + width/600,snake[i][1]*height/30 + height/600,0.03*width,0.03*height);
+        }
+        
+        if(gameState === 1){
+            fill(0, 0, 0, 90);
+            rect(0,0,width,height);
+            textSize(width/6);
+            if(snake.length >= (width*height)/400){
+                fill(242, 231, 29);
+                text("YOU WIN!", width/2, height/3);
+            } else {
+                fill(0,0,0);
+                text("Game Over", width/2, height/3);
+            }
+            fill(255, 0, 0);
+            rect(width/3, height*2/3 - height/20, width/3, height/10);
+            textSize(40);
+            fill(0, 0, 0);
+            text("RESTART", width/2, height*2/3);
+        }
+    } else {
+        if(mousePressed){
+            fill(255,0,0);
+            rect(width/2,height/2,30,30);
+        }
+        if(mousePressed && mouseX >= width/3 && mouseX <= width*2/3 && mouseY >= height*2/3 - height/20 && mouseY <= height*2/3 + height/20){
+            direction = "down";
+            change = false;
+            gameState = 0;
+            grow = true;
+            snake = [];
+            snake[0] = [];
+            snake[0][0] = 6;
+            snake[0][1] = 6;
+            food[0] = floor(random(0,width/20));
+            food[1] = floor(random(0,height/20));
+        }
+    }
+};
+    }};
+
+  // Get the canvas that ProcessingJS will use
+  var canvas = document.getElementById("mycanvas"); 
+  // Pass the function to ProcessingJS constructor
+  var processingInstance = new Processing(canvas, programCode); 
+  </script>
+    <div class = "sidebar">
+    	<a href = "index.html">Ellipse Maker</a>
+        <br>
+        <a href = "Hnefatl.html">Hnefatl (Aincient viking board game for Leif Erikson day)</a>
+    </div>
+</html>

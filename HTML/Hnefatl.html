@@ -1,7 +1,11 @@
 <html> 
   <head>
-    <title>Processing.JS inside Webpages: Template</title> 
+    <title>Hnefatl</title> 
+    <link rel="stylesheet" href="../CSS/stylesheet.css">
   </head>
+    <h1>
+        Hnefatl
+    </h1>
   <body>
 	<!--This draws the canvas on the webpage -->
     <canvas id="mycanvas"></canvas> 
@@ -13,7 +17,7 @@
   <script>
   var programCode = function(processingInstance) {
     with (processingInstance) {
-      size(600, 600); 
+      size(1100, 1100); 
       frameRate(30);
 strokeWeight(2);
 ellipseMode(CORNER);
@@ -78,13 +82,13 @@ Piece.prototype.draw = function() {
         noStroke();
         fill(255, 234, 0);
         beginShape();
-        vertex(this.x * width/11 + 15, this.y * height/11 + 35);
-        vertex(this.x * width/11 + 12, this.y * height/11 + 15);
-        vertex(this.x * width/11 + 22, this.y * height/11 + 25);
-        vertex(this.x * width/11 + width/22, this.y * height/11 + 15);
-        vertex((this.x + 1) * width/11 - 22, this.y * height/11 + 25);
-        vertex((this.x + 1) * width/11 - 12, this.y * height/11 + 15);
-        vertex((this.x + 1) * width/11 - 15, this.y * height/11 + 35);
+        vertex(this.x * width/11 + 0.025 * width, this.y * height/11 + 7 * height /120);
+        vertex(this.x * width/11 + 0.02 * width, this.y * height/11 + 0.025 * height);
+        vertex(this.x * width/11 + 11 * width/ 300, this.y * height/11 + height/24);
+        vertex(this.x * width/11 + width/22, this.y * height/11 + 0.025 * height);
+        vertex((this.x + 1) * width/11 - 11*width/300, this.y * height/11 + height/24);
+        vertex((this.x + 1) * width/11 - 0.02 * width, this.y * height/11 + 0.025 * height);
+        vertex((this.x + 1) * width/11 - 0.025 * width, this.y * height/11 + 7*height/120);
         endShape(CLOSE);
         stroke(0,0,0);
     }
@@ -437,4 +441,9 @@ mouseOut = function(){
   // Pass the function to ProcessingJS constructor
   var processingInstance = new Processing(canvas, programCode); 
   </script>
+    <div class = "sidebar">
+    	<a href = "index.html">Ellipse Maker</a>
+        <br>
+        <a href = "snake.html">Snake</a>
+    </div>
 </html>
