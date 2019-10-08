@@ -1,0 +1,440 @@
+<html> 
+  <head>
+    <title>Processing.JS inside Webpages: Template</title> 
+  </head>
+  <body>
+	<!--This draws the canvas on the webpage -->
+    <canvas id="mycanvas"></canvas> 
+  </body>
+ 
+  <!-- Include the processing.js library -->
+  <!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences -->
+  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+  <script>
+  var programCode = function(processingInstance) {
+    with (processingInstance) {
+      size(600, 600); 
+      frameRate(30);
+strokeWeight(2);
+ellipseMode(CORNER);
+textSize(20);
+textAlign(CENTER,TOP);
+var defenseTurn = 0;
+var mouseOnCanvas = (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height);
+var pieceMoved = false;
+var startingPositions = [
+    "00011111000",
+    "00000100000",
+    "00000000000",
+    "10000200001",
+    "10002220001",
+    "11022322011",
+    "10002220001",
+    "10000200001",
+    "00000000000",
+    "00000100000",
+    "00011111000",
+];
+var board = [];
+var adjacentCoords = [[-1, 0], [0, -1], [1, 0], [0, 1]];
+var gameState = -1;
+var kingCheckKilled = [0,0,0,0];
+
+for(var i = 0; i < 11; i++){
+    board[i] = [];
+    for(var j = 0; j < 11; j++){
+        board[i][j] = 0;
+    }
+}
+
+//2d array, 0 for attackers, 1 for defenders
+var pieceArray = [];
+
+var Piece = function(x, y, side, king) {
+    this.x = x;
+    this.y = y;
+    this.side = side;
+    this.king = king;
+    this.selected = false;
+    if(side){
+        this.opposingSide = 0;
+    } else {
+        this.opposingSide = 1;
+    }
+    this.rowEndCoords = [];
+    this.foundRowEnd = false;
+    this.checkStep = [];
+    this.deleteCoords = [];
+};
+
+Piece.prototype.draw = function() {
+    if(this.side){
+        fill(105, 61, 0);
+    } else {
+        fill(217, 141, 0);
+    }
+    ellipse(this.x * width/11 + 3, this.y * height/11 + 3, width / 11 - 6, height / 11 - 6);
+    if(this.king){
+        noStroke();
+        fill(255, 234, 0);
+        beginShape();
+        vertex(this.x * width/11 + 15, this.y * height/11 + 35);
+        vertex(this.x * width/11 + 12, this.y * height/11 + 15);
+        vertex(this.x * width/11 + 22, this.y * height/11 + 25);
+        vertex(this.x * width/11 + width/22, this.y * height/11 + 15);
+        vertex((this.x + 1) * width/11 - 22, this.y * height/11 + 25);
+        vertex((this.x + 1) * width/11 - 12, this.y * height/11 + 15);
+        vertex((this.x + 1) * width/11 - 15, this.y * height/11 + 35);
+        endShape(CLOSE);
+        stroke(0,0,0);
+    }
+};
+
+Piece.prototype.isOn = function(x, y) {
+    return this.x === x && this.y === y;
+};
+
+Piece.prototype.movementPattern = function(){
+    for(var i = 0; i < 2; i++){
+        for(var j = 0; j < 11; j++){
+            if(i === 0){
+                if(j !== this.x){
+                    board[j][this.y] = 1;
+                    if(!this.king){
+                        if((this.y === 0 || this.y === 10) && (j === 0 || j === 10)){
+                            board[j][this.y] = 0;
+                        }
+                        if(this.y === 5 && j === 5){
+                            board[j][this.y] = 0;
+                        }
+                    }
+                }
+            } else {
+                if(j !== this.y){
+                    board[this.x][j] = 1;
+                    if(!this.king){
+                        if((this.x === 0 || this.x === 10) && (j === 0 || j === 10)){
+                            board[this.x][j] = 0;
+                        }
+                        if(this.x === 5 && j === 5){
+                            board[this.x][j] = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for(var i = 0; i < 2; i++){
+        for(var j = 0; j < 11; j++){
+            if(i === 0){
+                for(var k = 0; k < pieceArray.length; k++){
+                    for(var m = 0; m < pieceArray[k].length; m++){
+                        if(pieceArray[k][m].isOn(j, this.y) && !pieceArray[k][m].isOn(this.x,this.y)){
+                            if(pieceArray[k][m].x < this.x){
+                                for(var n = 0; n < pieceArray[k][m].x + 1; n ++){
+                                    board[pieceArray[k][m].x - n][this.y] = 0;
+                                }
+                            } else {
+                                for(var n = 0; n < 11 - pieceArray[k][m].x; n ++){
+                                    board[pieceArray[k][m].x + n][this.y] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                for(var k = 0; k < pieceArray.length; k++){
+                    for(var m = 0; m < pieceArray[k].length; m++){
+                        if(pieceArray[k][m].isOn(this.x, j) && !pieceArray[k][m].isOn(this.x,this.y)){
+                            if(pieceArray[k][m].y < this.y){
+                                for(var n = 0; n < pieceArray[k][m].y + 1; n ++){
+                                    board[this.x][pieceArray[k][m].y - n] = 0;
+                                }
+                            } else {
+                                for(var n = 0; n < 11 - pieceArray[k][m].y; n ++){
+                                    board[this.x][n + pieceArray[k][m].y] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+Piece.prototype.checkForKill = function(){
+    this.rowEndCoords = [];
+    this.deleteCoords = [];
+    for(var i = 0; i < adjacentCoords.length; i++){
+        this.foundRowEnd = false;
+        for(var j = 1; j < 5; j++){
+            for(var k = 0; k < pieceArray[defenseTurn].length; k++){
+                if(pieceArray[defenseTurn][k].x === this.x + adjacentCoords[i][0] * j && pieceArray[defenseTurn][k].y === this.y + adjacentCoords[i][1] * j && !this.foundRowEnd){
+                    this.foundRowEnd = true;
+                    this.rowEndCoords.push([pieceArray[defenseTurn][k].x,pieceArray[defenseTurn][k].y,j]);
+                }
+            }
+            if(!this.foundRowEnd){
+                if((this.x  + adjacentCoords[i][0] * j === 0 || this.x + adjacentCoords[i][0] * j === 10) && (this.y  + adjacentCoords[i][1] * j === 0 || this.y + adjacentCoords[i][1] * j === 10)){
+                    this.rowEndCoords.push([this.x  + adjacentCoords[i][0] * j,this.y  + adjacentCoords[i][1] * j,j]);
+                }
+                if(this.x + adjacentCoords[i][0] * j === 5 && this.y + adjacentCoords[i][1] * j === 5){
+                    this.rowEndCoords.push([this.x  + adjacentCoords[i][0] * j,this.y  + adjacentCoords[i][1] * j,j]);
+                    if(!this.side){
+                        for(var k = 0; k < pieceArray[this.opposingSide].length; k++){
+                            if(pieceArray[this.opposingSide][k].x === 5 && pieceArray[this.opposingSide][k].y === 5 && pieceArray[this.opposingSide][k].king){
+                                this.rowEndCoords.splice(this.rowEndCoords.length - 1, 1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for(var i = 0; i < this.rowEndCoords.length; i++){
+        this.checkStep = [(this.rowEndCoords[i][0] - this.x) / this.rowEndCoords[i][2], (this.rowEndCoords[i][1] - this.y) / this.rowEndCoords[i][2]];
+        this.deleteCoords = [];
+        for(var j = 0; j < this.rowEndCoords[i][2]; j++){
+            for(var k = 0; k < pieceArray[this.opposingSide].length; k++){
+                if(pieceArray[this.opposingSide][k].x === this.x + j * this.checkStep[0] && pieceArray[this.opposingSide][k].y === this.y + j * this.checkStep[1]){
+                    this.deleteCoords.push([pieceArray[this.opposingSide][k].x,pieceArray[this.opposingSide][k].y]);
+                }
+            }
+        }
+        if(this.deleteCoords.length === this.rowEndCoords[i][2] - 1){
+            for(var j = 0; j < this.deleteCoords.length; j++){
+                for(var k = 0; k < pieceArray[this.opposingSide].length; k++){
+                    if(pieceArray[this.opposingSide][k].x === this.deleteCoords[j][0] && pieceArray[this.opposingSide][k].y === this.deleteCoords[j][1]){
+                        if(!pieceArray[this.opposingSide][k].king){
+                            pieceArray[this.opposingSide].splice(k, 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+for(var i = 0; i < 2; i++){
+    pieceArray[i] = [];
+}
+
+for(var i = 0; i < startingPositions.length; i++){
+    for(var j = 0; j < startingPositions[i].length; j++){
+        if(startingPositions[i][j] > (2).toString()){
+            pieceArray[1].push(new Piece(i, j, true, true));
+        } else if (startingPositions[i][j] > (1).toString()){
+            pieceArray[1].push(new Piece(i, j, true, false));
+        } else if (startingPositions[i][j] > (0).toString()){
+            pieceArray[0].push(new Piece(i, j, false, false));
+        }
+    }
+}
+
+var resetBoard = function(){
+    for(var i = 0; i < 11; i++){
+        board[i] = [];
+        for(var j = 0; j < 11; j++){
+            board[i][j] = 0;
+        }
+    }
+};
+
+var drawBoard = function(){
+    rectMode(CORNER);
+    background(252, 219, 136);
+    fill(255, 0, 0);
+    noStroke();
+    for(var i = 0; i < 2; i++){
+        for(var j = 0; j < 2; j++){
+            rect(i * (width - width/11), j * (height - height/11), width/11, height/11);
+        }
+    }
+    rect(5 * width/11, 5 * height/11, width/11, height/11);
+    fill(0, 0, 0);
+    stroke(0,0,0);
+    for(var i = 0; i < 12; i++){
+        line(i * width/11, 0, i * width/11, height);
+    }
+    for(var i = 0; i < 12; i++){
+        line(0, i * height/11, width, i * height/11);
+    }
+};
+
+var drawPieces = function(){
+    for(var i = 0; i < pieceArray.length; i++){
+        for(var j = 0; j < pieceArray[i].length; j++){
+            pieceArray[i][j].draw();
+        }
+    }
+};
+
+var drawTurnDisplay = function(){
+    noStroke();
+    var boxY = -5;
+    var textY = 3;
+    if(mouseY <= 35 && mouseX >= width/2 - 100 && width/2 + 100){
+        boxY = height - 35;
+        textY = height - 27;
+    }
+    fill(59, 59, 59);
+    rect(width/2 - 100, boxY, 200, 40);
+    fill(107, 107, 107);
+    rect(width/2 - 95, boxY + 5, 190, 30);
+    if(defenseTurn){
+        fill(105, 61, 0);
+        text("DEFENDER'S TURN", width/2, textY);
+    } else {
+        fill(217, 141, 0);
+        text("ATTACKER'S TURN", width/2, textY);
+    }
+};
+
+var highlightMoveableSpaces = function(){
+    fill(102, 255, 107, 128);
+    noStroke();
+    for(var x = 0; x < board.length; x++){
+        for(var y = 0; y < board[x].length; y++){
+            if(board[x][y]){
+                rect(x * width / 11, y * height / 11, width/11 - 1, height/11 - 1);
+            }
+        }
+    }
+};
+
+var highlightSelectedSpace = function(){
+    if(mouseOnCanvas){
+        fill(0, 0, 0, 108);
+        noStroke();
+        rect(mouseX - (mouseX % (width / 11)), mouseY - (mouseY % (height / 11)), width/11 - 1, height/11 - 1);
+    }
+};
+
+var checkKingCaptured = function(){
+    if(defenseTurn){
+        kingCheckKilled = [0,0,0,0];
+        gameState = 0;
+        for(var i = 0; i < pieceArray[defenseTurn].length; i++){
+            if(pieceArray[defenseTurn][i].king){
+                for(var j = 0; j < 4; j++){
+                    for(var k = 0; k < pieceArray[pieceArray[defenseTurn][i].opposingSide].length; k++){
+                        if(pieceArray[defenseTurn][i].x + adjacentCoords[j][0] === pieceArray[pieceArray[defenseTurn][i].opposingSide][k].x && pieceArray[defenseTurn][i].y + adjacentCoords[j][1] === pieceArray[pieceArray[defenseTurn][i].opposingSide][k].y){
+                            kingCheckKilled[j] = 1;
+                            break;
+                        }
+                    }
+                }
+                for(var j = 0; j < 4; j++){
+                    if(!kingCheckKilled[j]){
+                        gameState = -1;
+                    }
+                }
+            }
+        }
+    }
+};
+
+var checkDefenseWin = function(){
+    if(!defenseTurn){
+        for(var i = 0; i < pieceArray[1].length; i++){
+            if(pieceArray[1][i].king){
+                if((pieceArray[1][i].x === 0 || pieceArray[1][i].x === 10) && (pieceArray[1][i].y === 0 || pieceArray[1][i].y === 10)){
+                    gameState = 1;
+                }
+            }
+        }
+    }
+};
+
+var drawWinState = function(){
+    textAlign(CENTER,CENTER);
+    rectMode(CORNER);
+    textSize(60);
+    noStroke();
+    fill(0, 0, 0, 128);
+    rect(0, 0, width, height);
+    rectMode(CENTER);
+    fill(255, 255, 255);
+    rect(width/2,height/2,550,100);
+    if(gameState){
+        fill(105, 61, 0);
+        text("DEFENDERS WIN", width/2, height/2);
+    } else {
+        fill(217, 141, 0);
+        text("ATTACKERS WIN", width/2, height/2);
+    }
+};
+
+draw = function() {
+    drawBoard();
+    drawPieces();
+    if(gameState === -1){
+        highlightMoveableSpaces();
+        highlightSelectedSpace();
+        checkKingCaptured();
+        checkDefenseWin();
+        drawTurnDisplay();
+    } else {
+        drawWinState();
+    }
+};
+
+mousePressed = function(){
+    if(gameState === -1){
+        for(var i = 0; i < pieceArray[defenseTurn].length; i++){
+            if(pieceArray[defenseTurn][i].selected){
+                for(var j = 0; j < board.length; j++){
+                    for(var k = 0; k < board[j].length; k++){
+                        if(board[j][k] && mouseX >= j * width/11 && mouseX < (j + 1) * width/11 && mouseY >= k * height/11 && mouseY < (k + 1) * height/11){
+                            pieceArray[defenseTurn][i].x = j;
+                            pieceArray[defenseTurn][i].y = k;
+                            resetBoard();
+                            pieceMoved = true;
+                            pieceArray[defenseTurn][i].selected = false;
+                            pieceArray[defenseTurn][i].checkForKill();
+                        }
+                    }
+                }
+                if(pieceMoved){
+                    if(defenseTurn){
+                        defenseTurn = 0;
+                    } else {
+                        defenseTurn = 1;
+                    }
+                }
+            }
+        }
+        if(!pieceMoved){
+            for(var i = 0; i < pieceArray[defenseTurn].length; i++){
+                if(mouseX >= pieceArray[defenseTurn][i].x * width/11 && mouseX < (pieceArray[defenseTurn][i].x + 1) * width/11 && mouseY >= pieceArray[defenseTurn][i].y * height/11 && mouseY < (pieceArray[defenseTurn][i].y + 1) * height/11){
+                pieceArray[defenseTurn][i].selected = true;
+                    for(var j = 0; j < pieceArray[defenseTurn].length; j++){
+                        if(i !== j){
+                            pieceArray[defenseTurn][j].selected = false;
+                        }
+                    }
+                    resetBoard();
+                    pieceArray[defenseTurn][i].movementPattern();
+                }
+            }
+        }
+        pieceMoved = false;
+    }
+};
+
+mouseOver = function(){
+    mouseOnCanvas = true;
+};
+
+mouseOut = function(){
+    mouseOnCanvas = false;
+};
+    }};
+
+  // Get the canvas that ProcessingJS will use
+  var canvas = document.getElementById("mycanvas"); 
+  // Pass the function to ProcessingJS constructor
+  var processingInstance = new Processing(canvas, programCode); 
+  </script>
+</html>
