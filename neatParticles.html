@@ -1,0 +1,205 @@
+<html> 
+  <head>
+    <title>Cool Particles</title> 
+    <link rel="stylesheet" href="CSS/stylesheet.css">
+      <link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300&display=swap" rel="stylesheet">
+  </head>
+    <h1>
+        Cool Particle effect
+    </h1>
+  <body>
+      <p>
+          Sit back and watch
+          <br>
+          t to toggle trails, s to "skew" the particles, l to lengthen the trails, k to shorten them.
+      </p>
+	<!--This draws the canvas on the webpage -->
+    <canvas id="mycanvas"></canvas> 
+  </body>
+ 
+  <!-- Include the processing.js library -->
+  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+  <script>
+  var programCode = function(processingInstance) {
+    with (processingInstance) {
+      size(600, 600); 
+      frameRate(30);
+        
+//if you want the dots to leave trails
+var trails = true;
+//if you want the dots to move at random angles
+var skewed = false;
+//opacity of backGround being overlayed
+var trailLength = 0;
+
+background(0, 0, 0);
+var particles = [];
+var counter = 0;
+var perlinStep = 0.003;
+rectMode(CENTER);
+noStroke();
+
+var Particle = function(){
+    this.whichSide = floor(random(0,2));
+    this.horizontal = floor(random(0,2));
+    if(this.horizontal){
+        this.y = floor(random(0,height+1));
+        if(this.whichSide){
+            this.x = 0;
+        } else {
+            this.x = width;
+        }
+    } else {
+        this.x = floor(random(0,width+1));
+        if(this.whichSide){
+            this.y = 0;
+        } else {
+            this.y = height;
+        }
+    }
+    this.rIncrement = random(0,1000000);
+    this.gIncrement = random(0,1000000);
+    this.bIncrement = random(0,1000000);
+    this.rColor = 255*noise(this.rIncrement);
+    this.gColor = 255*noise(this.gIncrement);
+    this.bColor = 255*noise(this.bIncrement);
+    this.isDead = false;
+    this.side = floor(random(1,5));
+    this.velocity = new PVector(random(-1,1),random(-1,1));
+    this.velocity.normalize();
+    if(this.side === 1){
+        this.pos = new PVector(0,floor(random(0, height + 1)));
+        if(this.velocity.x < 0){
+            this.velocity.x *= -1;
+        }
+    } else if (this.side === 2) {
+        this.pos = new PVector(floor(random(0,width + 1)),0);
+        if(this.velocity.y < 0){
+            this.velocity.y *= -1;
+        }
+    } else if (this.side === 3) {
+        this.pos = new PVector(width,floor(random(0,height + 1)));
+        if(this.velocity.x > 0){
+            this.velocity.x *= -1;
+        }
+    } else {
+        this.pos = new PVector(floor(random(0,width + 1)),height);
+        if(this.velocity.y > 0){
+            this.velocity.y *= -1;
+        }
+    }
+};
+
+Particle.prototype.move = function(){
+    if(!skewed){
+        if(this.horizontal){
+            if(this.whichSide){
+                this.x ++;
+            } else {
+                this.x --;
+            }
+        } else {
+            if(this.whichSide){
+                this.y ++;
+            } else {
+                this.y --;
+            }
+        }
+    } else {
+        this.pos.add(this.velocity);
+    }
+};
+
+Particle.prototype.draw = function() {
+    fill(this.rColor,this.gColor,this.bColor);
+    if(skewed){
+        ellipse(this.pos.x,this.pos.y,5,5);
+    } else {
+        ellipse(this.x,this.y,5,5);
+    }
+};
+
+Particle.prototype.recolor = function(){
+    this.rIncrement += perlinStep;
+    this.gIncrement += perlinStep;
+    this.bIncrement += perlinStep;
+    this.rColor = 255*noise(this.rIncrement);
+    this.gColor = 255*noise(this.gIncrement);
+    this.bColor = 255*noise(this.bIncrement);
+};
+
+Particle.prototype.checkDeath = function(){
+    if(skewed){
+        if(this.pos.x < -3 || this.pos.x > width + 3 || this.pos.y < -3 || this.pos.y > height+3){
+            this.isDead = true;
+        }
+    } else {
+        if(this.x < -3 || this.x > width + 3 || this.y < -3 || this.y > height+3){
+            this.isDead = true;
+        }
+    }
+};
+
+draw = function () {
+    if(!trails){
+        background(0, 0, 0);
+    } else {
+        fill(0, 0, 0, trailLength);
+        rect(width/2,height/2,width,height);
+    }
+    if(counter === 3){
+        particles[particles.length] = new Particle();
+        counter = 0;
+    }
+    for(var i = particles.length - 1; i >= 0; i--){
+        particles[i].move();
+        particles[i].draw();
+        particles[i].recolor();
+        particles[i].checkDeath();
+        if(particles[i].isDead){
+            particles.splice(i,1);
+        }
+    }
+    counter++;
+};
+
+        keyPressed = function(){
+            if(key.toString() === "t"){
+                trails = !trails;
+                background(0,0,0);
+            }
+            if(key.toString() === "s"){
+                skewed = !skewed;
+                background(0,0,0);
+            }
+            if(key.toString() === "l"){
+                trailLength--;
+                if(trailLength < 0){
+                    trailLength = 0;
+                }
+            }
+            if(key.toString() === "k"){
+                trailLength++;
+                if(trailLength > 255){
+                    trailLength = 255;
+                }
+            }
+        };
+       
+    }};
+
+  // Get the canvas that ProcessingJS will use
+  var canvas = document.getElementById("mycanvas"); 
+  // Pass the function to ProcessingJS constructor
+  var processingInstance = new Processing(canvas, programCode); 
+  </script>
+    <div class = "sidebar">
+    	<a href = "index.html">Ellipse Maker</a>
+        <br>
+        <a href = "Hnefatl.html">Hnefatafl (Aincient viking board game for Leif Erikson day)</a>
+        <br>
+        <a href = "snake.html">Snake</a>
+        <br>
+        <a href="https://github.com/JonahtCheyette">My Github</a>
+    </div>
+</html>
