@@ -1,23 +1,25 @@
 <html> 
+    <link rel="stylesheet" href="CSS/stylesheet.css">
   <head>
     <title>Ellipse Maker</title> 
-    <link rel="stylesheet" href="CSS/stylesheet.css">
   </head>
     <h1>
         Ellipse Maker
     </h1>
   <body>
 	<!--This draws the canvas on the webpage -->
+      <p>
+          Just a bit of cool geometry. Ia you pick a point in a circle, draw lines from the circumference of the circle to the point, then rotate all the lines by 90 degrees, you end up eith an ellipse with the center of the circle as one foci and the point you picked as the other.
+      </p>
     <canvas id="mycanvas"></canvas> 
   </body>
  
   <!-- Include the processing.js library -->
-  <!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences -->
   <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
   <script>
   var programCode = function(processingInstance) {
     with (processingInstance) {
-      size(1000, 1000); 
+      size(1100, 1100); 
       frameRate(30);
       stroke(255, 255, 255);
 var pointX = 0;
